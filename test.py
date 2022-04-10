@@ -1,9 +1,9 @@
 import requests
 import time
 import json
+import sqlite3
 
-
-data = requests.get('https://ghoapi.azureedge.net/api/AIR_41').json()
-with open('air.json','w') as f:
-    json.dump(data,f,indent=4)
-print(len(data['value']))
+conn = sqlite3.connect('206_final.db')
+cur = conn.cursor()
+cur.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Air_Pollution_Category' ''')
+print(cur.fetchone()[0])
