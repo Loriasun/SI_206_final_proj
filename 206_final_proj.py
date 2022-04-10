@@ -1,3 +1,5 @@
+# from types import NoneType
+from re import S
 import requests
 import time
 import json
@@ -14,54 +16,81 @@ def CreateDB(db_name):
     conn = sqlite3.connect(name)
     cur = conn.cursor()
     return cur, conn 
-    
-def air_pollution_death(cur,conn):
-    data = requests.get('https://ghoapi.azureedge.net/api/AIR_4').json()
-    with open('air_pollution.json','w') as f:
-        json.dump(data,f,indent=4)
+def Drop_table(cur,conn):
     cur.execute('DROP TABLE IF EXISTS Air_Pollution_Death')
-    cur.execute('CREATE TABLE Air_pollution_Death (ID NUMBER PRIMARY KEY, Country TEXT, Cause_ID TEXT, GENDER TEXT, Number of Death NUMBER)')
+    cur.execute('DROP TABLE IF EXISTS COVID_TEST')
     conn.commit()
-    id = 0
-    count = 0
-    index = 0
-    for index in range(len(data)):
-        id += 1
-        country = data['SpatialDim']
-        cid = data['Dim2']
-        g = data['Dim1']
-        num = data['NumericValue']
-        cur.execute('INSERT INTO Air_Pollution_Death (ID, Country, Cause_ID, GENDER, Number of Death) VALUES (?,?,?,?,?)',
-            (id, country, cid, g, num))
-        conn.commit()
-        
+    
+def Air_Pollution_Death(cur,conn):
+    data = requests.get('https://ghoapi.azureedge.net/api/AIR_4').json()
+    # with open('air_pollution.json','w') as f:
+    #     json.dump(data,f,indent=4)
+    cur.execute('CREATE TABLE IF NOT EXISTS Air_pollution_Death (ID NUMBER PRIMARY KEY, Country TEXT, Cause_ID TEXT, GENDER TEXT, Number_of_Death FLOAT)')
+    cur.execute('SELECT MAX(ID) FROM Air_pollution_Death')
+    # temp = type(cur.fetchone()[0])
+    # print(temp)
+    temp = cur.fetchone()[0]
+    if not temp:
+        index = 0
+    else:
+        # index = int(cur.fetchone()[0])
+        index = int(temp)+1
+    print(index)
+    for i in range(len(data['value']))[index:]:
+        country = data['value'][i]['SpatialDim']
+        cid = data['value'][i]['Dim2']
+        g = data['value'][i]['Dim1']
+        num = data['value'][i]['NumericValue']
+        print(i)
+        cur.execute('INSERT INTO Air_Pollution_Death (ID, Country, Cause_ID, GENDER, Number_of_Death) VALUES (?,?,?,?,?)',
+            (i, country, cid, g, num)) 
+        index += 1
+        if(index % 25 == 0):
+            break
+    conn.commit()
     
 
 def COVID_API(cur,conn):
 # def COVID_API():
-    cur.execute('DROP TABLE IF EXISTS COVID_TEST')
-    cur.execute('CREATE TABLE COVID_TEST (Date NUMBER PRIMARY KEY, Positive NUMBER, Negative NUMBER, Currently_Hospitalized NUMBER,Cumulative_Hospitalized NUMBER)')
-    conn.commit()
-    
-    # cur.execute('DROP TABLE IF EXISTS COVID_TEST')
-    # cur.execute('CREATE TABLE COVID_TEST (Date NUMBER PRIMARY KEY, Positive NUMBER, Negative NUMBER)')
-    # conn.commit()
+    cur.execute('CREATE TABLE IF NOT EXISTS COVID_TEST (Date NUMBER PRIMARY KEY, Positive NUMBER, Negative NUMBER, Currently_Hospitalized NUMBER,Cumulative_Hospitalized NUMBER)')
+    cur.execute('SELECT MAX(Date) FROM COVID_TEST')
+    temp = cur.fetchone()[0]
+    print(str(temp))
+    if not temp:
+        mon = 3
+        day = 1
+    else:
+        mon = int(str(temp)[4]+ str(temp)[5])
+        day = int (str(temp)[6]+str(temp)[7])+1
+    if(day == 30):
+        day = 1
+        mon = mon + 1
+    # sys.exit()
+    count = 0
+    flag = False
 
-    for mon in range(13)[3:]: 
-        for day in range(30)[1:]:
+    for m in range(13)[mon:]: 
+        if count!= 0:
+            day = 1
+        for d in range(30)[day:]:   
             req_date = f'2020'
-            if( mon < 10):
-                req_date +=f'0{mon}'
+            if( m < 10):
+                req_date +=f'0{m}'
             else:
-                req_date += f'{mon}'
-            if(day < 10):
-                req_date +=f'0{day}'
+                req_date += f'{m}'
+            if(d < 10):
+                req_date +=f'0{d}'
             else:
-                req_date +=f'{day}'
-            # print(req_date)
+                req_date +=f'{d}'
+            print(req_date)
+            # if(count % 25 == 0):
+            #     time.sleep(3)
+            
             req = f'https://api.covidtracking.com/v1/us/{req_date}.json'
+            count += 1
             # print(req)
             data = requests.get(req).json()
+            # print(data)
             # print(data)
 
             date = data['date']
@@ -72,6 +101,13 @@ def COVID_API(cur,conn):
             cur.execute('INSERT INTO COVID_TEST (Date , Positive , Negative ,Currently_Hospitalized, Cumulative_Hospitalized) VALUES (?,?,?,?,?)',
                 (date, num_pos, num_neg,cur_hos, accu_hos))
             conn.commit()
+            print(count)
+            if(count == 25):
+                flag = True
+                break
+        if flag == True:
+            break
+    # conn.`commit()
             
             
         
@@ -82,6 +118,9 @@ def main():
     db_name = '206_final'
     cur, conn = CreateDB(db_name)
     COVID_API(cur, conn)
+    # Air_Pollution_Death(cur,conn)
+    # cur.execute('DROP TABLE IF EXISTS Air_Pollution_Death')
+    # conn.commit()
     
     # COVID_API()
 if __name__ == '__main__':
