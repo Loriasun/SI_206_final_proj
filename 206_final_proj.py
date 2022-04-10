@@ -1,10 +1,14 @@
 # from types import NoneType
 from re import S
+# from turtle import color
 import requests
 import time
 import json
 import sqlite3
 import os
+import matplotlib.pyplot as plt
+import numpy as np
+# import tkinter
 
 def CreateDB(db_name):
     name = f'{db_name}.db'
@@ -20,7 +24,7 @@ def Air_Pollution_Death(cur,conn):
     data = requests.get('https://ghoapi.azureedge.net/api/AIR_41').json()
     with open('air_pollution_death.json','w') as f:
         json.dump(data,f,indent=4)
-    cur.execute('CREATE TABLE IF NOT EXISTS Air_pollution_Death (ID NUMBER PRIMARY KEY, Country TEXT, Cause_ID TEXT, GENDER TEXT, Number_of_Death FLOAT)')
+    cur.execute('CREATE TABLE IF NOT EXISTS Air_pollution_Death (ID NUMBER PRIMARY KEY, Country TEXT, Cause_ID TEXT, Gender TEXT, Number_of_Death FLOAT)')
     cur.execute('SELECT MAX(ID) FROM Air_pollution_Death')
     # temp = type(cur.fetchone()[0])
     # print(temp)
@@ -29,7 +33,7 @@ def Air_Pollution_Death(cur,conn):
         index = 0
     else:
         # index = int(cur.fetchone()[0])
-        index = int(temp)+1
+        index = int(temp)
     # print(index)
     for i in range(len(data['value']))[index:]:
         country = data['value'][i]['SpatialDim']
@@ -37,7 +41,7 @@ def Air_Pollution_Death(cur,conn):
         g = data['value'][i]['Dim1']
         num = data['value'][i]['NumericValue']
         # print(i)
-        cur.execute('INSERT INTO Air_Pollution_Death (ID, Country, Cause_ID, GENDER, Number_of_Death) VALUES (?,?,?,?,?)',
+        cur.execute('INSERT INTO Air_Pollution_Death (ID, Country, Cause_ID, Gender, Number_of_Death) VALUES (?,?,?,?,?)',
             (i+1, country, cid, g, num)) 
         index += 1
         if(index % 25 == 0):
@@ -60,7 +64,51 @@ def Air_Pollution_Category(cur,conn):
         cur.execute('INSERT INTO Air_Pollution_Category (Category_ID, Catagory_Type, Category_Name) VALUES (?,?,?)',(c,t,n))
         conn.commit()
         
+def Air_Pollution_cate_Pie_Chart (cur,conn):
+    cur.execute('SELECT C.Category_Name, COUNT(*) FROM Air_Pollution_Death d JOIN Air_Pollution_Category c on d.Cause_ID = c.Category_ID GROUP BY c.Category_Name')
+    conn.commit()
+    # print((cur.fetchall()))
+    # tup = cur.fetchall()
+    total = 0
+    dict = {}
+    for t in cur.fetchall():
+        dict[t[0]] = t[1]
+        total += t[1]
+    labels = []
+    vale = []
+    for keys in dict.keys():
+        labels.append(keys)
+        vale.append(int((dict[keys]/total)*100))
     
+    explode = (0, 0.1, 0, 0)  # only "explode" the 2nd slice (i.e. 'Hogs')
+
+    fig1, ax1 = plt.subplots(figsize =(6.5,5))
+    plt.rcParams.update({'font.size': 7})
+    ax1.pie(vale, explode=explode, labels=labels, autopct='%2.1f%%',
+            shadow=True, startangle=90)
+    ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    plt.title('Air Pollution Death Category', bbox={'facecolor':'0.8', 'pad':5})
+    plt.savefig('Air Pollution Death Category.png')
+    
+def Air_Pollution_Gender_bar_chart(cur,conn):
+    cur.execute('SELECT d.Country, c.Category_Name,d.Gender,COUNT(*) FROM Air_Pollution_Death d JOIN Air_Pollution_Category c on d.Cause_ID = c.Category_ID GROUP BY d.Country,d.Gender Order by d.Country,c.Category_Name,COUNT(*)')
+    conn.commit()
+    # print(cur.fetchall())
+    temp = []
+    values = []
+    for t in cur.fetchall():
+        tup = (t[0],t[1],t[2])
+        temp.append(tup)
+        values.append(t[3])
+    y_pos = [i for i, _ in enumerate(temp)]
+    fig1, ax1 = plt.subplots(figsize =(23,8))
+    plt.rcParams.update({'font.size': 7})
+    plt.barh(y_pos,values)
+    plt.ylabel('causes, gender, country')
+    plt.xlabel('Number of Death')
+    plt.title('Death of Air_Pollution_Death with different Cause in Countries within Different Gender')
+    plt.yticks(y_pos,temp)
+    plt.savefig('test.png')
 
 def COVID_API(cur,conn):
 # def COVID_API():
@@ -129,6 +177,7 @@ def COVID_API(cur,conn):
 def main():
     db_name = '206_final'
     cur, conn = CreateDB(db_name)
+
     COVID_API(cur, conn)
     Air_Pollution_Death(cur,conn)
 
@@ -137,6 +186,9 @@ def main():
     if cur.fetchone()[0] == 0:
         Air_Pollution_Category(cur, conn)
     conn.commit()
+
+    Air_Pollution_cate_Pie_Chart(cur, conn)
+    Air_Pollution_Gender_bar_chart(cur,conn)
     # cur.execute('DROP TABLE IF EXISTS Air_Pollution_Death')
     # conn.commit()
     
