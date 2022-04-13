@@ -8,6 +8,7 @@ import sqlite3
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import csv
 # import tkinter
 
 def CreateDB(db_name):
@@ -67,29 +68,35 @@ def Air_Pollution_Category(cur,conn):
 def Air_Pollution_cate_Pie_Chart (cur,conn):
     cur.execute('SELECT C.Category_Name, COUNT(*) FROM Air_Pollution_Death d JOIN Air_Pollution_Category c on d.Cause_ID = c.Category_ID GROUP BY c.Category_Name')
     conn.commit()
-    # print((cur.fetchall()))
-    # tup = cur.fetchall()
     total = 0
     dict = {}
     for t in cur.fetchall():
         dict[t[0]] = t[1]
         total += t[1]
     labels = []
-    vale = []
+    value = []
     for keys in dict.keys():
         labels.append(keys)
-        vale.append(int((dict[keys]/total)*100))
+        value.append(int((dict[keys]/total)*100))
     
-    explode = (0, 0.1, 0, 0)  # only "explode" the 2nd slice (i.e. 'Hogs')
-
+    explode = (0, 0.1, 0, 0) 
     fig1, ax1 = plt.subplots(figsize =(6.5,5))
     plt.rcParams.update({'font.size': 7})
-    ax1.pie(vale, explode=explode, labels=labels, autopct='%2.1f%%',
+    ax1.pie(value, explode=explode, labels=labels, autopct='%2.1f%%',
             shadow=True, startangle=90)
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     plt.title('Air Pollution Death Category', bbox={'facecolor':'0.8', 'pad':5})
     plt.savefig('Air Pollution Death Category.png')
-    
+    print(labels)
+    print(value)
+
+
+    with open('Air Pollution Death Category.csv','w') as f:
+        csv_writer = csv.writer(f)
+        csv_writer.writerow(labels)
+        csv_writer.writerow(value)
+
+
 def Air_Pollution_Gender_bar_chart(cur,conn):
     cur.execute('SELECT d.Country, c.Category_Name,d.Gender,COUNT(*) FROM Air_Pollution_Death d JOIN Air_Pollution_Category c on d.Cause_ID = c.Category_ID GROUP BY d.Country,d.Gender Order by d.Country,c.Category_Name,COUNT(*)')
     conn.commit()
