@@ -1,17 +1,12 @@
-import requests
-import time
-import json
-import sqlite3
-import csv
+import matplotlib.pyplot as plt
 
-# conn = sqlite3.connect('206_final.db')
-# cur = conn.cursor()
-# cur.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Air_Pollution_Category' ''')
-# print(cur.fetchone()[0])
+# Create data
+x=range(1,6)
+y1=[1,4,6,8,9]
+y2=[2,2,7,10,12]
+y3=[2,8,5,10,6]
 
-Details = ['Name', 'class', 'passoutYear', 'subject']  
-rows = [ ['sushma', '2nd', '2023', 'Physics'],  ['john', '3rd', '2022', 'M2'],  ['kushi', '4th', '2021', 'M4']] 
-with open('student.csv', 'w') as f: 
-    write = csv.writer(f) 
-    write.writerow(Details) 
-    write.writerows(rows)
+# Basic stacked area chart.
+plt.stackplot(x,y1, y2, y3, labels=['A','B','C'])
+plt.legend(loc='upper left')
+plt.savefig('testing.png')

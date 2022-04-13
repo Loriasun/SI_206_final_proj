@@ -1,2 +1,0 @@
-Ischaemic Heart Disease,Lower Respiratory Infections,Stroke,"Trachea, Bronchus, Lung Cancers"
-26,31,18,24

@@ -9,7 +9,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
-# import tkinter
+
 
 def CreateDB(db_name):
     name = f'{db_name}.db'
@@ -87,9 +87,6 @@ def Air_Pollution_cate_Pie_Chart (cur,conn):
     ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     plt.title('Air Pollution Death Category', bbox={'facecolor':'0.8', 'pad':5})
     plt.savefig('Air Pollution Death Category.png')
-    print(labels)
-    print(value)
-
 
     with open('Air Pollution Death Category.csv','w') as f:
         csv_writer = csv.writer(f)
@@ -115,7 +112,7 @@ def Air_Pollution_Gender_bar_chart(cur,conn):
     plt.xlabel('Number of Death')
     plt.title('Death of Air_Pollution_Death with different Cause in Countries within Different Gender')
     plt.yticks(y_pos,temp)
-    plt.savefig('test.png')
+    plt.savefig('Air_Pollution_Gender_bar_chart.png')
 
 def COVID_API(cur,conn):
 # def COVID_API():
@@ -149,9 +146,6 @@ def COVID_API(cur,conn):
                 req_date +=f'0{d}'
             else:
                 req_date +=f'{d}'
-            # print(req_date)
-            # if(count % 25 == 0):
-            #     time.sleep(3)
             
             req = f'https://api.covidtracking.com/v1/us/{req_date}.json'
             count += 1
@@ -175,9 +169,37 @@ def COVID_API(cur,conn):
         if flag == True:
             break
     # conn.`commit()
-            
-            
+
+def COIVD_API_stacked_Area_Chart(cur,conn):
+    cur.execute('SELECT Date, Positive, Negative FROM COVID_TEST LIMIT 50')
+    conn.commit()
+    date = []
+    lst_pos = []
+    lst_neg = []
+    for t in cur.fetchall():
+        # print(t)
         
+        date.append(str(t[0])[4:])
+        lst_pos.append(t[1])
+
+        lst_neg.append(t[2])
+
+    x=date
+    y1=lst_pos
+    y2=lst_neg
+    # y3=[2,8,5,10,6]
+
+    # Basic stacked area chart.
+    
+    fig = plt.figure(figsize=(20, 2))
+    ax = fig.add_subplot(111)
+    # ax.plot()
+    ax.stackplot(x,y1, y2,  labels=['Positive','Negative'])
+    ax.legend(loc='upper left')
+    plt.tight_layout()
+    plt.savefig('test_pos.png')
+
+    
 
     
 
@@ -193,9 +215,17 @@ def main():
     if cur.fetchone()[0] == 0:
         Air_Pollution_Category(cur, conn)
     conn.commit()
-
+    
     Air_Pollution_cate_Pie_Chart(cur, conn)
     Air_Pollution_Gender_bar_chart(cur,conn)
+    cur.execute('SELECT COUNT(*) FROM COVID_TEST')
+    conn.commit()
+    limit = cur.fetchone()[0]
+    # print(cur.fetchone()[0])s
+    if limit > 50:
+        print('area chart')
+        COIVD_API_stacked_Area_Chart(cur,conn)
+
     # cur.execute('DROP TABLE IF EXISTS Air_Pollution_Death')
     # conn.commit()
     
