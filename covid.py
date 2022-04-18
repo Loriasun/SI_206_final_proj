@@ -1,7 +1,10 @@
-
-import requests
+from bs4 import BeautifulSoup
 import sqlite3
-from covid19dh import covid19
+import requests
+import re
+import unittest
+import os
+import csv
 
 def CreateDB(db_name):
     name = f'{db_name}.db'
@@ -9,37 +12,38 @@ def CreateDB(db_name):
     cur = conn.cursor()
     return cur, conn 
 
-def get_Case_Death_By_Country(cur,conn):
-
-    matches = soup.find('div', {'class':'external-html'})
-    rows = matches.find_all('strong') 
-    row_cells = row.find_all('span')
-    print(rows) 
-    cur.execute('CREATE TABLE IF NOT EXISTS Case_Death_By_Country (Country TEXT PRIMARY KEY, Case INTEGER, Death INTEGER)')
-    cur.execute('SELECT MAX(Case) FROM Case_Death_By_Country')
-    cur.execute('SELECT MAX(Death) FROM Case_Death_By_Country')
-
-    temp = cur.fetchone()[0]
-    if not temp:
-        index = 0
-    else:
-        index = int(temp)
-    for i in range(len(page['value']))[index:]:
-        key = row_cells[0].text.strip()
-        case = row_cells[2].text.strip()
-        death = row_cells[2].text.strip()
-        
-        cur.execute('INSERT OR IFNORE INTO Case_Death_By_Country (Country, Case, Death) VALUES (?,?,?)',
-            (i+1, country, Case, Death)) 
-        index += 1
-        if(index % 25 == 0):
-            break
+def create_covid_table(cur, conn):
+    cur.execute('CREATE TABLE IF NOT EXISTS covid (Country TEXT PRIMARY KEY, Case INTEGER, Death INTEGER)')
     conn.commit()
+
+def add_covid(cur, conn):
+
+    data = requests.get('https://www.worldometers.info/coronavirus/countries-where-coronavirus-has-spread')
+    soup = BeautifulSoup(data.content, 'html.parser')
+    matches = soup.find_all('tbody')
+    for match in matches:
+        data = match.find_all('tr')
+
+    for item in data:
+        temp = item.find_all('td')
+        country = temp[0].text
+        case = temp[1].text
+        death = temp[2].text
+        region = temp[3].text
+        cur.execute(
+            """
+            INSERT OR IGNORE INTO covid (Country, Cases, Deaths, Region)
+            VALUES (?, ?, ?, ?)
+            """,
+            (country, case, death, region)
+        )
+    conn.commit()
+
 
 
 def main():
     cur, conn = CreateDB("covid.db")
-    get_Case_Death_By_Country(cur, conn)
+    add_covid(cur, conn)
 
 if __name__ == "__main__":
     main()
