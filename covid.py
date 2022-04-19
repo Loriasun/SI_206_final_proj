@@ -56,15 +56,15 @@ def covid_bar_chart(cur,conn):
     objects = tuple(temp)
     y_pos = np.arange(len(objects))
 
-    plt.barh(y_pos,values,align='center',alpha=1)
-    plt.yticks(y_pos,objects)
+    plt.bar(y_pos,values,align='center',alpha=1)
+    plt.xticks(y_pos,objects)
     plt.xlabel('Country')
     plt.ylabel('Number of Deaths')
     plt.title('Number of Deaths by Country')
     plt.savefig('Number_Deaths_by_Country_bar_chart.png')
 
     plt.show()
-    return dict
+    # return dict
 
 
 
