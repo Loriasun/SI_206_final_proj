@@ -13,7 +13,7 @@ def CreateDB(db_name):
     return cur, conn 
 
 def create_covid_table(cur, conn):
-    cur.execute('CREATE TABLE IF NOT EXISTS covid (Country TEXT PRIMARY KEY, Cases NUMBER, Deaths Number, Region TEXT )')
+    cur.execute('CREATE TABLE IF NOT EXISTS covid (Country TEXT PRIMARY KEY, Cases INTEGER, Deaths INTEGER, Region TEXT )')
     conn.commit()
 
 def add_covid(cur, conn):
@@ -27,8 +27,10 @@ def add_covid(cur, conn):
     for item in data:
         temp = item.find_all('td')
         country = temp[0].text
-        case = temp[1].text
-        death = temp[2].text
+        case_b = temp[1].text
+        case = int(case_b.replace(',', ''))
+        death_b = temp[2].text
+        death = int(death_b.replace(',', ''))
         region = temp[3].text
         cur.execute(
             """
@@ -39,9 +41,8 @@ def add_covid(cur, conn):
         )
     conn.commit()
 
-
 def covid_bar_chart(cur,conn):
-    cur.execute('SELECT Regions, Deaths,COUNT(*) FROM covid')
+    cur.execute('SELECT Deaths, Country FROM covid LIMIT 10')
     conn.commit()
 
     temp = []
@@ -57,8 +58,10 @@ def covid_bar_chart(cur,conn):
 
     plt.barh(y_pos,values,align='center',alpha=1)
     plt.yticks(y_pos,objects)
-    plt.xlabel('Number of Deaths')
-    plt.title('Regions')
+    plt.xlabel('Country')
+    plt.ylabel('Number of Deaths')
+    plt.title('Number of Deaths by Country')
+    plt.savefig('Number_Deaths_by_Country_bar_chart.png')
 
     plt.show()
     return dict
@@ -69,6 +72,7 @@ def main():
     cur, conn = CreateDB("covid.db")
     create_covid_table(cur,conn)
     add_covid(cur, conn)
+    covid_bar_chart(cur, conn)
 
 if __name__ == "__main__":
     main()
