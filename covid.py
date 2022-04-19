@@ -7,13 +7,13 @@ import os
 import csv
 
 def CreateDB(db_name):
-    name = f'{db_name}.db'
+    name = f'{db_name}'
     conn = sqlite3.connect(name)
     cur = conn.cursor()
     return cur, conn 
 
 def create_covid_table(cur, conn):
-    cur.execute('CREATE TABLE IF NOT EXISTS covid (Country TEXT PRIMARY KEY, Case INTEGER, Death INTEGER)')
+    cur.execute('CREATE TABLE IF NOT EXISTS covid (Country TEXT PRIMARY KEY, Cases NUMBER, Deaths Number, Region TEXT )')
     conn.commit()
 
 def add_covid(cur, conn):
@@ -43,6 +43,7 @@ def add_covid(cur, conn):
 
 def main():
     cur, conn = CreateDB("covid.db")
+    create_covid_table(cur,conn)
     add_covid(cur, conn)
 
 if __name__ == "__main__":
