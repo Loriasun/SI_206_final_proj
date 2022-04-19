@@ -1,10 +1,10 @@
 from bs4 import BeautifulSoup
 import sqlite3
 import requests
-import re
-import unittest
+import matplotlib.pyplot as plt
 import os
-import csv
+import numpy as np
+
 
 def CreateDB(db_name):
     name = f'{db_name}'
@@ -40,6 +40,30 @@ def add_covid(cur, conn):
     conn.commit()
 
 
+def covid_bar_chart(cur,conn):
+    cur.execute('SELECT Regions, Deaths,COUNT(*) FROM covid')
+    conn.commit()
+
+    temp = []
+    values = []
+    dict = {}
+    for t in cur.fetchall():
+        temp.append(t[0])
+        values.append(t[1])
+        dict[t[0]] = t[1]
+
+    objects = tuple(temp)
+    y_pos = np.arange(len(objects))
+
+    plt.barh(y_pos,values,align='center',alpha=1)
+    plt.yticks(y_pos,objects)
+    plt.xlabel('Number of Deaths')
+    plt.title('Regions')
+
+    plt.show()
+    return dict
+
+
 
 def main():
     cur, conn = CreateDB("covid.db")
@@ -48,6 +72,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
