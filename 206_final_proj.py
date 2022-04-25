@@ -95,7 +95,7 @@ def Air_Pollution_cate_Pie_Chart (cur,conn):
 
 
 def Air_Pollution_Gender_bar_chart(cur,conn):
-    cur.execute('SELECT d.Country, c.Category_Name,d.Gender,COUNT(*) FROM Air_Pollution_Death d JOIN Air_Pollution_Category c on d.Cause_ID = c.Category_ID GROUP BY d.Country,d.Gender Order by d.Country,c.Category_Name,COUNT(*)')
+    cur.execute('SELECT d.Country, c.Category_Name,d.Gender,COUNT(*) FROM Air_Pollution_Death d JOIN Air_Pollution_Category c on d.Cause_ID = c.Category_ID GROUP BY d.Country,d.Gender Order by d.Country,c.Category_Name,COUNT(*)LIMIT 20')
     conn.commit()
     # print(cur.fetchall())
     temp = []
@@ -149,11 +149,7 @@ def COVID_API(cur,conn):
             
             req = f'https://api.covidtracking.com/v1/us/{req_date}.json'
             count += 1
-            # print(req)
             data = requests.get(req).json()
-            # print(data)
-            # print(data)
-
             date = data['date']
             num_pos = data['positive']
             num_neg = data['negative']
@@ -187,13 +183,8 @@ def COIVD_API_stacked_Area_Chart(cur,conn):
     x=date
     y1=lst_pos
     y2=lst_neg
-    # y3=[2,8,5,10,6]
-
-    # Basic stacked area chart.
-    
     fig = plt.figure(figsize=(20, 2))
     ax = fig.add_subplot(111)
-    # ax.plot()
     ax.stackplot(x,y1, y2,  labels=['Positive','Negative'])
     ax.legend(loc='upper left')
     plt.tight_layout()
@@ -223,7 +214,6 @@ def main():
     limit = cur.fetchone()[0]
     # print(cur.fetchone()[0])s
     if limit > 50:
-        print('area chart')
         COIVD_API_stacked_Area_Chart(cur,conn)
 
     # cur.execute('DROP TABLE IF EXISTS Air_Pollution_Death')

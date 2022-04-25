@@ -40,43 +40,43 @@ def add_covid(cur, conn):
         cur.execute(
             """
             INSERT OR IGNORE INTO covid (Country, Cases, Deaths, Percentage, Region)
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?, ?,?)
             """,
             (country, case, death, percentage, region)
         )
     conn.commit()
 
 def covid_bar_chart(cur,conn):
-    cur.execute('SELECT Percentage, Country FROM covid LIMIT 10')
+    cur.execute('SELECT Cases, Country FROM covid LIMIT 10')
     conn.commit()
 
     temp = []
     values = []
-    dict = {}
+    # dict = {}
     for t in cur.fetchall():
         temp.append(t[0])
-        values.append(t[3])
-        dict[t[0]] = t[3]
-
-    objects = tuple(temp)
+        values.append(t[1])
+        # dict[t[0]] = t[1]
+    
+    print(temp)
+    objects = tuple(values)
     y_pos = np.arange(len(objects))
-    fig1, ax1 = plt.subplots(figsize =(23,8))
-
-    plt.barh(y_pos,values,align='center',alpha=1)
-    plt.yticks(y_pos,objects)
+    fig1, ax = plt.subplots(figsize =(23,8))
+    ax.ticklabel_format(style='plain')
+    plt.bar(y_pos,temp,align='center',alpha=1)
+    plt.xticks(y_pos,objects)
     
     plt.xlabel('Country')
     plt.ylabel('Percent of Deaths')
     plt.title('Percent of Deaths by Country')
-    plt.savefig('Percent_Deaths_by_Country_bar_chart.png')
+    plt.savefig('Cases_Deaths_by_Country_bar_chart.png')
 
-    plt.show()
-    return dict
+   
 
 
 
 def main():
-    cur, conn = CreateDB("covid.db")
+    cur, conn = CreateDB("206_final.db")
     drop_table(cur, conn)
     create_covid_table(cur,conn)
     add_covid(cur, conn)
