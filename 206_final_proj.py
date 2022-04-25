@@ -16,24 +16,18 @@ def CreateDB(db_name):
     conn = sqlite3.connect(name)
     cur = conn.cursor()
     return cur, conn 
-# def Drop_table(cur,conn):
-#     cur.execute('DROP TABLE IF EXISTS Air_Pollution_Death')
-#     cur.execute('DROP TABLE IF EXISTS COVID_TEST')
-#     conn.commit()
-    
+
 def Air_Pollution_Death(cur,conn):
     data = requests.get('https://ghoapi.azureedge.net/api/AIR_41').json()
     with open('air_pollution_death.json','w') as f:
         json.dump(data,f,indent=4)
     cur.execute('CREATE TABLE IF NOT EXISTS Air_pollution_Death (ID NUMBER PRIMARY KEY, Country TEXT, Cause_ID TEXT, Gender TEXT, Number_of_Death FLOAT)')
     cur.execute('SELECT MAX(ID) FROM Air_pollution_Death')
-    # temp = type(cur.fetchone()[0])
-    # print(temp)
+    
     temp = cur.fetchone()[0]
     if not temp:
         index = 0
     else:
-        # index = int(cur.fetchone()[0])
         index = int(temp)
     # print(index)
     for i in range(len(data['value']))[index:]:

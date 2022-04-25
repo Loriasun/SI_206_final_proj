@@ -46,7 +46,7 @@ def add_covid(cur, conn):
         )
     conn.commit()
 
-def covid_bar_chart(cur,conn):
+def covid_Cases_bar_chart(cur,conn):
     cur.execute('SELECT Cases, Country FROM covid LIMIT 10')
     conn.commit()
 
@@ -55,10 +55,7 @@ def covid_bar_chart(cur,conn):
     # dict = {}
     for t in cur.fetchall():
         temp.append(t[0])
-        values.append(t[1])
-        # dict[t[0]] = t[1]
-    
-    print(temp)
+        values.append(t[1])   
     objects = tuple(values)
     y_pos = np.arange(len(objects))
     fig1, ax = plt.subplots(figsize =(23,8))
@@ -67,9 +64,32 @@ def covid_bar_chart(cur,conn):
     plt.xticks(y_pos,objects)
     
     plt.xlabel('Country')
-    plt.ylabel('Percent of Deaths')
-    plt.title('Percent of Deaths by Country')
+    plt.ylabel('Number of cases of Deaths')
+    plt.title('Number of cases of Deaths by Country')
     plt.savefig('Cases_Deaths_by_Country_bar_chart.png')
+
+def covid_Percentage_bar_chart(cur,conn):
+    cur.execute('SELECT Percentage, Country FROM covid LIMIT 10')
+    conn.commit()
+
+    temp = []
+    values = []
+    # dict = {}
+    for t in cur.fetchall():
+        temp.append(t[0])
+        values.append(t[1])
+        
+    objects = tuple(values)
+    y_pos = np.arange(len(objects))
+    fig1, ax = plt.subplots(figsize =(23,8))
+    ax.ticklabel_format(style='plain')
+    plt.bar(y_pos,temp,align='center',alpha=1)
+    plt.xticks(y_pos,objects)
+    
+    plt.xlabel('Country')
+    plt.ylabel('Percentage of Deaths')
+    plt.title('Percentage of Deaths by Country')
+    plt.savefig('Percentage_Deaths_by_Country_bar_chart.png')
 
    
 
@@ -80,7 +100,8 @@ def main():
     drop_table(cur, conn)
     create_covid_table(cur,conn)
     add_covid(cur, conn)
-    covid_bar_chart(cur, conn)
+    covid_Cases_bar_chart(cur, conn)
+    covid_Percentage_bar_chart(cur,conn)
 
 if __name__ == "__main__":
     main()
